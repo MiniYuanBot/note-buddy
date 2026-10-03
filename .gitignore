@@ -1,0 +1,15 @@
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Obsidian runtime state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+
+# Obsidian plugin binaries/data
+.obsidian/plugins/
+
+# unnecessary files
+*/input/
+*/workspace/
