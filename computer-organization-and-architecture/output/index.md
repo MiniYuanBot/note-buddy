@@ -1,12 +1,13 @@
 ---
 schema_version: 1
 type: "course-index"
-title: "computer-organization-and-architecture"
-course: "computer-organization-and-architecture"
+title: "计算机组织与体系结构"
+aliases: ["计算机组织与体系结构"]
+course: "coa"
 ---
 
-# computer-organization-and-architecture
+# 计算机组织与体系结构
 
-- [L01 体系结构基础](L01/index.md)
-- [L02 性能与指令集](L02/index.md)
-- [L03 运算与流水线](L03/index.md)
+- [L01 计算机体系结构导论](L01/index.md)
+- [L02 性能与RISC-V指令集](L02/index.md)
+- [L03 RISC-V ALU与基础架构](L03/index.md)
