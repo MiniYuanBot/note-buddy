@@ -52,7 +52,9 @@ ISA 同时面向两侧，承担两项职责：[^s1p31]
 
 汇编语言本身只是服务于 ISA 的一种书写形式；CPU 真正识别的是机器码。ISA 这条“抽象层”恰好横在汇编与机器码之间、软件与硬件之间。
 
-![ISA 是软硬件之间的抽象层：软件侧关心如何编程，硬件侧关心要构建什么；程序代码从高级语言到汇编再到机器码](../assets/l02-isa-abstraction-layer.png)
+![ISA 的软硬件抽象层](../assets/l02-isa-abstraction-layer.png)
+
+图：ISA 是软硬件之间的抽象层：软件侧关心如何编程，硬件侧关心要构建什么；程序代码从高级语言到汇编再到机器码。
 
 ### ISA 与操作系统的区别
 
@@ -81,7 +83,7 @@ ISA 是一个关键接口（a critical interface）。一个好的抽象应满�
 
 这四条与《人月神话》（*The Mythical Man-Month*, Brooks, p.44）的观点一致：在功能一定的前提下，最好的系统是能以最简单、最直接的方式描述事物的系统；简单直接来自**概念完整性**（conceptual integrity），而易用性要求设计的统一。[^s1p32] 落到体系结构上，就是一个概念完整的好 ISA 会让整个处理器的设计更简单、更好。
 
-ISA 的设计还会影响性能铁律中的指令数与 CPI 等因素，度量 ISA 优劣的指标见 [[03 性能汇总与Amdahl定律]]。
+ISA 的设计还会影响性能铁律中的指令数与 CPI 等因素，度量 ISA 优劣的指标见 [03 性能汇总与Amdahl定律](03-performance-summary-and-amdahls-law.md)。
 
 ## 冯·诺依曼处理器组织
 
@@ -111,7 +113,9 @@ flowchart LR
   ALU -->|存回 Store| M
 ```
 
-![冯·诺依曼处理器组织：存储器、总线接口、寄存器、控制单元与 ALU/FPU，按取指→译码→执行（→存储）循环；右侧列出数据通路与控制的职责](../assets/l02-von-neumann-organization.png)
+![冯·诺依曼处理器组织](../assets/l02-von-neumann-organization.png)
+
+图：冯·诺依曼处理器组织：存储器、总线接口、寄存器、控制单元与 ALU/FPU，按取指→译码→执行（→存储）循环；右侧列出数据通路与控制的职责。
 
 > [!tip] 课堂强调
 > 图中的 Fetch → Decode → Execute → (Store) 与熟悉的五级流水线相比少了一步——写回（Write Back）。这是有意留下的：执行结果写回寄存器这一步并未画出。[^s2b9]
@@ -166,7 +170,7 @@ ISA 的设计哲学由当时的技术约束决定。早期计算机面临两个�
 >
 > 对比：CISC 1 条指令，RISC 4 条指令。
 
-只看指令数，RISC 似乎更差。但由性能铁律 $\text{CPU time} = \text{IC} \times \text{CPI} \times \text{CC}$（见 [[02 CPI与性能铁律]]），指令数只是三个因素之一：
+只看指令数，RISC 似乎更差。但由性能铁律 $T_{\mathrm{CPU}} = \mathrm{IC} \times \mathrm{CPI} \times \mathrm{CC}$（见 [02 CPI与性能铁律](02-cpi-and-iron-law.md)），指令数只是三个因素之一：
 
 - CISC 的一条复杂指令可能需要多个周期（例如 5 个周期）才能执行完；
 - RISC 每条简单指令可能只需 1 个周期；
@@ -174,7 +178,7 @@ ISA 的设计哲学由当时的技术约束决定。早期计算机面临两个�
 
 因此 RISC 虽然指令更多，却有机会整体更快。这就是 IC 与 CPI、时钟周期之间的权衡。[^s2b10]
 
-典型的 RISC 指令集有 ARM、RISC-V、MIPS、Sun SPARC、HP PA-RISC、IBM PowerPC、Intel（Compaq）Alpha 等。[^s1p38] ARM 几乎用于所有手机；RISC-V 目前在产品中还少见，但开源、前景广阔，详见 [[05 RISC-V概览与指令格式]]。[^s2b10]
+典型的 RISC 指令集有 ARM、RISC-V、MIPS、Sun SPARC、HP PA-RISC、IBM PowerPC、Intel（Compaq）Alpha 等。[^s1p38] ARM 几乎用于所有手机；RISC-V 目前在产品中还少见，但开源、前景广阔，详见 [05 RISC-V概览与指令格式](05-risc-v-overview-and-instruction-formats.md)。[^s2b10]
 
 下表对比两种设计哲学：
 

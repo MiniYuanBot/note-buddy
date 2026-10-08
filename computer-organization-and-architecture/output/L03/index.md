@@ -57,16 +57,16 @@ flowchart TD
 
 | 内容 | 公式 / 规则 | 所在章节 |
 |---|---|---|
-| 全加器 | $S=A\oplus B\oplus C_{in}$，$C_{out}=AB+AC_{in}+BC_{in}$ | [[01 ALU与整数加减]] |
-| 补码减法 | $A-B=A+\overline{B}+1$（control 同时接异或门与 $c_0$） | [[01 ALU与整数加减]] |
-| 有符号溢出 | $\text{overflow}=c_{n-1}\oplus c_n$ | [[01 ALU与整数加减]] |
-| IEEE 754 | $(-1)^s\times(1+F)\times2^{E-\text{bias}}$，bias 单精度 127、双精度 1023 | [[02 乘除法与浮点数]] |
-| 单周期时序 | $T_{\rm cycle}\ge T_{\rm clk\_q}+T_{\rm max\_comb}+T_s$ | [[03 数据通路部件与时钟]] |
-| 分支目标 | $PC+(\text{sext}(imm)\ll1)$，$\text{PCSrc}=\text{Branch}\land\text{zero}$ | [[04 单周期数据通路]] |
-| 流水线周期数 | $k$ 级执行 $n$ 条指令：$k+(n-1)$ 个周期 | [[06 流水线设计与性能]] |
-| 流水线加速比 | $T_{\rm single}/T_{\rm pipe}$，理想值 = 级数（例：$4.1/1.2\approx3.42$） | [[06 流水线设计与性能]] |
-| 转发条件 | RegWrite ∧ Rd ≠ 0 ∧ Rd = Rs；EX/MEM → 10 优先，MEM/WB → 01 | [[07 结构冒险与数据冒险]] |
-| 分支停顿 | MEM 判定 3 周期，ID 判定 1 周期 | [[08 控制冒险]] |
+| 全加器 | $S=A\oplus B\oplus C_{\mathrm{in}}$，$C_{\mathrm{out}}=AB+AC_{\mathrm{in}}+BC_{\mathrm{in}}$ | [01 ALU与整数加减](chapters/01-alu-and-integer-addition.md) |
+| 补码减法 | $A-B=A+\overline{B}+1$（control 同时接异或门与 $c_0$） | [01 ALU与整数加减](chapters/01-alu-and-integer-addition.md) |
+| 有符号溢出 | $O=c_{n-1}\oplus c_n$，$O=1$ 表示溢出 | [01 ALU与整数加减](chapters/01-alu-and-integer-addition.md) |
+| IEEE 754 | $(-1)^s\times(1+F)\times2^{E-B}$，偏置 $B$：单精度 127、双精度 1023 | [02 乘除法与浮点数](chapters/02-multiplication-division-and-floating-point.md) |
+| 单周期时序 | $T_{\rm cycle}\ge T_{\rm clk\_q}+T_{\rm max\_comb}+T_s$ | [03 数据通路部件与时钟](chapters/03-datapath-elements-and-clocking.md) |
+| 分支目标 | $\mathrm{PC}+(\operatorname{sext}(\mathrm{imm})\ll1)$，$\mathrm{PCSrc}=\mathrm{Branch}\land\mathrm{zero}$ | [04 单周期数据通路](chapters/04-single-cycle-datapath.md) |
+| 流水线周期数 | $k$ 级执行 $n$ 条指令：$k+(n-1)$ 个周期 | [06 流水线设计与性能](chapters/06-pipeline-design-and-performance.md) |
+| 流水线加速比 | $T_{\rm single}/T_{\rm pipe}$，理想值 = 级数（例：$4.1/1.2\approx3.42$） | [06 流水线设计与性能](chapters/06-pipeline-design-and-performance.md) |
+| 转发条件 | $\mathrm{RegWrite}\land(\mathrm{Rd}\ne0)\land(\mathrm{Rd}=\mathrm{Rs})$；EX/MEM → 10 优先，MEM/WB → 01 | [07 结构冒险与数据冒险](chapters/07-structural-and-data-hazards.md) |
+| 分支停顿 | MEM 判定 3 周期，ID 判定 1 周期 | [08 控制冒险](chapters/08-control-hazards.md) |
 
 ## 不确定事项
 

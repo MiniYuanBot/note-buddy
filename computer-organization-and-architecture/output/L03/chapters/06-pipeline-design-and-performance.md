@@ -26,7 +26,7 @@ section: "section-6"
 - **吞吐量**（throughput）：单位时间内完成的工作量（例如每周期完成的指令数 IPC）。
 - **延迟**（latency）：一条指令从开始到完成所经历的时间，也称执行时间、响应时间。[^s1p138]
 
-（备份页内容）回顾性能方程 $\text{CPU time} = \text{CPI}\times\text{CC}\times\text{IC}$（CC 为时钟周期，IC 为指令数，见 L02《02 CPI与性能铁律》），想让程序更快有三条路：[^s1p137]
+（备份页内容）回顾性能方程 $T_{\mathrm{CPU}} = \mathrm{CPI}\times\mathrm{CC}\times\mathrm{IC}$（CC 为时钟周期，IC 为指令数，见 L02《02 CPI与性能铁律》），想让程序更快有三条路：[^s1p137]
 
 1. **把指令周期拆得越来越细**：拆到一定程度后收益递减，加载状态寄存器花的时间与真正做事的时间相当。
 2. **当前指令尚未完成就开始取下一条并执行**：这就是流水线，现代处理器几乎都采用。
@@ -84,7 +84,7 @@ flowchart LR
 - **写操作发生在周期的前半段，读操作发生在后半段**。这样同一周期内 WB 先写入的值，ID 在后半周期就能读到。
 
 > [!note] 补充解释
-> "前半周期写、后半周期读"的直接收益是：相隔 3 条指令的写后读不需要额外处理——WB 级写入的结果在同一周期就被 ID 级的后继指令读到。这一点在 [[07 结构冒险与数据冒险]] 分析数据冒险时会用到。
+> "前半周期写、后半周期读"的直接收益是：相隔 3 条指令的写后读不需要额外处理——WB 级写入的结果在同一周期就被 ID 级的后继指令读到。这一点在 [07 结构冒险与数据冒险](07-structural-and-data-hazards.md) 分析数据冒险时会用到。
 
 ### 原则二：流水线寄存器（Pipeline Register）
 
@@ -94,12 +94,16 @@ flowchart LR
 
 | 流水线寄存器 | 保存内容 |
 | --- | --- |
-| IF/ID | $\text{PC}^{\rm RF}$、$\text{IR}^{\rm RF}$（IR 即指令寄存器 Instruction Register） |
-| ID/EX | $\text{PC}^{\rm ALU}$、$\text{IR}^{\rm ALU}$、A（RegData1）、B（RegData2） |
-| EX/MEM | $\text{PC}^{\rm MEM}$、$\text{IR}^{\rm MEM}$、$\text{Out}^{\rm MEM}$（ALU 输出）、$D^{\rm ALU}$（RegData2，作为写存储器的数据） |
-| MEM/WB | $\text{PC}^{\rm WB}$、$\text{IR}^{\rm WB}$、$\text{Out}^{\rm WB}$、$D^{\rm MEM}$（存储器读出数据） |
+| IF/ID | $\mathrm{PC}^{\rm RF}$、$\mathrm{IR}^{\rm RF}$（IR 即指令寄存器 Instruction Register） |
+| ID/EX | $\mathrm{PC}^{\rm ALU}$、$\mathrm{IR}^{\rm ALU}$、A（RegData1）、B（RegData2） |
+| EX/MEM | $\mathrm{PC}^{\rm MEM}$、$\mathrm{IR}^{\rm MEM}$、$R^{\rm MEM}$（ALU 输出）、$D^{\rm ALU}$（RegData2，作为写存储器的数据） |
+| MEM/WB | $\mathrm{PC}^{\rm WB}$、$\mathrm{IR}^{\rm WB}$、$R^{\rm WB}$、$D^{\rm MEM}$（存储器读出数据） |
 
-![四个流水线寄存器 IF/ID、ID/EX、EX/MEM、MEM/WB 把 PC、指令、寄存器读出值与 ALU 结果逐级传递](../assets/l03-pipeline-registers.png)
+其中 $R$ 表示沿流水线传递的 ALU 结果，对应图中的 `Out`；上标表示所在阶段。
+
+![五级流水线的级间寄存器](../assets/l03-pipeline-registers.png)
+
+图：四个流水线寄存器 IF/ID、ID/EX、EX/MEM、MEM/WB 把 PC、指令、寄存器读出值与 ALU 结果逐级传递。
 
 可以看到 PC 和指令字一路从 IF/ID 传到 MEM/WB：许多信息在当前阶段用不上，但为了最后一级能用到，必须在各级之间不停地传。
 
@@ -112,7 +116,7 @@ flowchart LR
 
 ### 原则三：控制信号的产生与分组传递
 
-控制信号的产生方式与单周期处理器相同（在 ID 级由控制单元根据操作码产生，见 [[04 单周期数据通路]]），但某些信号在后续阶段才用得上，而且每一级正在执行的指令不同。[^s1p73] 因此控制信号在 ID 产生后按使用阶段分成 EX、MEM、WB 三组，存入 ID/EX；每过一级就"用掉"本级那一组，剩余的继续向后传：
+控制信号的产生方式与单周期处理器相同（在 ID 级由控制单元根据操作码产生，见 [04 单周期数据通路](04-single-cycle-datapath.md)），但某些信号在后续阶段才用得上，而且每一级正在执行的指令不同。[^s1p73] 因此控制信号在 ID 产生后按使用阶段分成 EX、MEM、WB 三组，存入 ID/EX；每过一级就"用掉"本级那一组，剩余的继续向后传：
 
 ```mermaid
 flowchart LR
@@ -172,7 +176,7 @@ sd 和 beq 不写寄存器（RegWrite=0），所以 MemtoReg 无关（X）。
 1. **级间锁存增加延迟**：每一级末尾都要经过一个流水线寄存器，数据必须在时钟沿前满足建立时间 $T_s$（并保持 $T_h$），时钟沿后还要经过 $T_{\rm clk\_q}$ 才出现在输出端。单周期只付一次这份开销，$k$ 级流水线要付 $k$ 次。
 2. **最长的一级决定时钟周期**：较短的级也必须等满整个周期。[^s1p81]
 
-于是每级周期满足（时序约束的推导见 [[03 数据通路部件与时钟]]）：
+于是每级周期满足（时序约束的推导见 [03 数据通路部件与时钟](03-datapath-elements-and-clocking.md)）：
 $$
 T_{\rm cycle} \ge \max_i\, t_i + T_{\rm clk\_q} + T_s
 $$
@@ -182,11 +186,11 @@ $$
 > 已知各级延迟：IF 1.0 ns，ID 0.6 ns，EX 0.9 ns，MEM 1.2 ns，WB 0.4 ns。[^s1p81]
 >
 > 1. **单周期**：一个周期要走完全部五级，$T=1.0+0.6+0.9+1.2+0.4=4.1$ ns；每条指令 1 个周期，延迟 4.1 ns。
-> 2. **五级流水线**：周期取最长级 $T=\max=1.2$ ns（MEM）；每条指令要 5 个周期，延迟 $5\times1.2=6.0$ ns——比单周期**更长**。
-> 3. **吞吐量**：度过最初的填充期后，两者都是每周期完成 1 条指令（CPI=1），区别只在周期长度。[^s1p82]
-> 4. **加速比**：
+> 2. **五级流水线**：周期取最长级 $T=\max(1.0,0.6,0.9,1.2,0.4)=1.2$ ns（MEM）；每条指令要 5 个周期，延迟 $5\times1.2=6.0$ ns——比单周期**更长**。
+> 3. **吞吐量**：度过最初的填充期后，两者都是每周期完成 1 条指令（$\mathrm{CPI}=1$），区别只在周期长度。[^s1p82]
+> 4. **加速比**（记为 $S$）：
 > $$
-> \text{Speedup}=\frac{\text{CPI}\times T_{\rm single}}{\text{CPI}\times T_{\rm pipe}}=\frac{4.1\ \text{ns}}{1.2\ \text{ns}}\approx 3.42
+> S=\frac{\mathrm{CPI}\times T_{\rm single}}{\mathrm{CPI}\times T_{\rm pipe}}=\frac{4.1\ \text{ns}}{1.2\ \text{ns}}\approx 3.42
 > $$
 >
 > | 设计 | 周期 | 每条指令周期数 | 单条延迟 | 吞吐量 |
@@ -210,7 +214,9 @@ $$
 - Willamette（2001）约 22 级、主频约 2 GHz，P4 Prescott（2004）达到约 31 级、主频约 3.6 GHz；
 - 此后 Core 2 Conroe（2006）回落到 14 级，Core 2 Yorkfield（2008）与 Core i7 Gulftown（2010）约 16 级。
 
-![Intel x86 流水线深度与频率：从 i486 的 5 级升到 P4 Prescott 约 31 级，随后 Core 系列回落到 14–16 级](../assets/l03-x86-pipeline-depth.png)
+![x86 流水线深度与频率变化](../assets/l03-x86-pipeline-depth.png)
+
+图：Intel x86 流水线深度与频率：从 i486 的 5 级升到 P4 Prescott 约 31 级，随后 Core 系列回落到 14–16 级。
 
 回落的原因是**功耗与发热**：同时进行的事情太多，芯片会"熔化"。[^s1p85] 必须关掉系统中暂时不用的部分，常见手段有：
 
@@ -222,7 +228,7 @@ $$
 flowchart LR
   A[发现时序余量 slack<br/>延迟 < 时钟周期] --> B[降低 Vdd]
   B --> C[电路变慢<br/>延迟恰好填满周期]
-  B --> D[动态功耗 ∝ Vdd² 下降]
+  B --> D[动态功耗随电压平方下降]
 ```
 
 动态功耗与电压、频率的关系以及“功耗墙”的来龙去脉见 L01《05 技术趋势与功耗墙》，这里不再展开。
@@ -235,7 +241,7 @@ flowchart LR
 - **数据冒险**（data hazard）：指令的输入操作数依赖于前面指令尚未产生的结果。
 - **控制冒险**（control hazard）：分支结果未定，不知道下一条该取哪条指令。[^s1p142]
 
-结构冒险与数据冒险的具体分析与解决（停顿、转发、load-use）见 [[07 结构冒险与数据冒险]]，控制冒险见 [[08 控制冒险]]。
+结构冒险与数据冒险的具体分析与解决（停顿、转发、load-use）见 [07 结构冒险与数据冒险](07-structural-and-data-hazards.md)，控制冒险见 [08 控制冒险](08-control-hazards.md)。
 
 （备份页内容）RISC-V 指令集本身是按易于流水化设计的：[^s1p142]
 

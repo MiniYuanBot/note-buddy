@@ -19,7 +19,7 @@ lecture: "L01"
 - [02 构建模块与研究方法](chapters/02-building-blocks-and-research-method.md)：逻辑/状态/互连与量化权衡的工程循环
 - [03 主板结构与系统互连](chapters/03-motherboard-and-system-interconnect.md)：北桥并入 CPU、南桥争用与串并行取舍
 - [04 系统框图与内存墙](chapters/04-system-block-diagram-and-memory-wall.md)：所有设备经内存形成内存墙；CPU 指令流
-- [05 技术趋势与功耗墙](chapters/05-technology-trends-and-power-wall.md)：性能与工艺趋势，P∝f³ 推出功耗墙
+- [05 技术趋势与功耗墙](chapters/05-technology-trends-and-power-wall.md)：性能与工艺趋势，$P\propto f^3$ 推出功耗墙
 - [06 多核能效与可靠性挑战](chapters/06-multicore-energy-and-reliability.md)：同频提性能、多核问题、能效与 SSD 纠错
 
 ## 本讲小结
@@ -33,7 +33,7 @@ flowchart TB
   B --> MB["主板互连：北桥并入 CPU、南桥争用、串行取代并行"]
   MB --> MW["系统框图：所有设备经过内存，形成内存墙"]
   T["技术趋势：CPU 指数增长，DRAM 速度增长慢"] --> MW
-  T --> PW["功耗墙：P ∝ V²f ∝ f³"]
+  T --> PW["功耗墙：提频同时升压，功耗急增"]
   PW --> S["体系结构出路：同频提性能、多核"]
   S --> C["新问题：互连、一致性、能效、可靠性"]
   Q --> C
@@ -45,10 +45,10 @@ flowchart TB
 
 | 公式 | 含义 | 所在章节 |
 |---|---|---|
-| $P \approx \tfrac12 C V^2 A f$ | 动态功耗；$C$ 电容（F），$V$ 电源电压（V），$A$ 活动因子，$f$ 时钟频率（Hz） | [[05 技术趋势与功耗墙]] |
-| $P \propto V^2 f \propto f^3$ | 假设 $f \propto V$ 时，功耗约与频率（性能）的三次方成正比 | [[05 技术趋势与功耗墙]] |
-| 面积 $\propto$ 制程$^2$ | 工艺每进一代面积约减半；$12^2/3^2 = 16$ | [[06 多核能效与可靠性挑战]] |
-| 页错误位数 $= 32768 \times \text{RBER}$ | 4 KB 页，RBER $3\times10^{-3}$ 时约 98 位；ECC 目标 UBER $10^{-15}$ | [[06 多核能效与可靠性挑战]] |
+| $P \approx \tfrac12 C V^2 A f$ | 动态功耗；$C$ 电容（F），$V$ 电源电压（V），$A$ 活动因子，$f$ 时钟频率（Hz） | [05 技术趋势与功耗墙](chapters/05-technology-trends-and-power-wall.md) |
+| $P \propto V^2 f \propto f^3$ | 假设 $f \propto V$ 时，功耗约与频率（性能）的三次方成正比 | [05 技术趋势与功耗墙](chapters/05-technology-trends-and-power-wall.md) |
+| $A_{\mathrm{chip}}\propto\ell^2$ | $A_{\mathrm{chip}}$ 为芯片面积，$\ell$ 为制程特征尺寸；工艺每进一代面积约减半；$12^2/3^2 = 16$ | [06 多核能效与可靠性挑战](chapters/06-multicore-energy-and-reliability.md) |
+| 页错误位数 $= 32768 \times \mathrm{RBER}$ | 4 KB 页，RBER $3\times10^{-3}$ 时约 98 位；ECC 目标 UBER $10^{-15}$ | [06 多核能效与可靠性挑战](chapters/06-multicore-energy-and-reliability.md) |
 
 ## 不确定事项
 

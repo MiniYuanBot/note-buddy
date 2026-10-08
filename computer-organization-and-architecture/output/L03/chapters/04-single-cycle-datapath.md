@@ -21,7 +21,7 @@ section: "section-4"
 
 ## 单周期设计的思路
 
-要让处理器真正执行指令，需要把上一节的组合元件、状态元件和控制信号（见 [[03 数据通路部件与时钟]]）连成一条完整的数据通路。最简单的连法是让每条指令在一个时钟周期内走完全部步骤。
+要让处理器真正执行指令，需要把上一节的组合元件、状态元件和控制信号（见 [03 数据通路部件与时钟](03-datapath-elements-and-clocking.md)）连成一条完整的数据通路。最简单的连法是让每条指令在一个时钟周期内走完全部步骤。
 
 **单周期数据通路**（single-cycle datapath）是指每条指令的取指（Fetch）、译码（Decode）、执行（Execute）都在同一个时钟周期内完成的设计。[^s1p40] 本节实现的是一个简化的 RISC-V 子集：[^s1p127]
 
@@ -127,7 +127,7 @@ R 型指令（`add`、`sub`、`and`、`or`）对 rs1、rs2 中的值执行由 op
 2. **算目标地址**：Imm Gen 把 12 位偏移符号扩展到 64 位，经 **Shift left 1** 左移一位，再由**一个独立的加法器**与 PC 相加：
 
 $$
-\text{BranchTarget} = \text{PC} + \big(\text{sext}(\text{imm}) \ll 1\big)
+\mathrm{PC}_{\mathrm{target}} = \mathrm{PC} + \big(\operatorname{sext}(\mathrm{imm}) \ll 1\big)
 $$
 
 左移 1 位是因为 SB 格式不存储 imm[0]（偏移总是 2 的倍数），存储的 12 位实际是 imm[12:1]。
@@ -135,7 +135,7 @@ $$
 最后由分支控制逻辑在两个候选中选新 PC：
 
 $$
-\text{PCSrc} = \text{Branch} \land \text{zero}
+\mathrm{PCSrc} = \mathrm{Branch} \land \mathrm{zero}
 $$
 
 PCSrc = 0 选 PC+4，PCSrc = 1 选分支目标。[^s1p43]
@@ -145,7 +145,7 @@ PCSrc = 0 选 PC+4，PCSrc = 1 选分支目标。[^s1p43]
 > - 偏移只左移 **1** 位（半字对齐），不是 MIPS 的左移 2 位；立即数扩展是 **32 → 64** 位。部分示意图残留的 “Sign Extend 16→32” 是 MIPS 版本的遗留，应按 RISC-V 理解为 Imm Gen 32→64。[^s1p51]
 
 > [!example] 例：计算 beq 的下一 PC
-> `beq x1, x2, L` 位于 PC = `0x1000`，指令中存储的 imm[12:1] = `000000001000`₂ = 8。
+> `beq x1, x2, L` 位于 PC = `0x1000`，指令中存储的 imm[12:1] = $000000001000_2=8$。
 >
 > 1. sext 后仍为 8，左移 1 位得 16 = `0x10`。
 > 2. 分支目标 = `0x1000 + 0x10 = 0x1010`；PC+4 = `0x1004`。
@@ -172,7 +172,9 @@ R 型与访存指令共用 ALU 和寄存器堆写端口，但数据来源不同�
 
 完整的单周期数据通路如下：控制单元读入 `Instr[6-0]`，输出 Branch、MemRead、MemtoReg、MemWrite、ALUSrc、RegWrite 和 2 位 ALUOp；ALU 控制单元根据 ALUOp 和 `Instr[30,14-12]`（funct7 的第 30 位与 funct3）产生具体的 ALU 操作；Branch 与 zero 经与门得到 PCSrc。[^s1p43]
 
-![带控制单元的单周期数据通路：控制单元由 Instr[6-0] 产生 RegWrite、ALUSrc、MemRead/MemWrite、MemtoReg、Branch，Branch 与 zero 相与得到 PCSrc](assets/l03-single-cycle-datapath-control.png)
+![单周期数据通路与控制单元](../assets/l03-single-cycle-datapath-control.png)
+
+图：带控制单元的单周期数据通路：控制单元由 `Instr[6-0]` 产生 RegWrite、ALUSrc、MemRead/MemWrite、MemtoReg、Branch，Branch 与 zero 相与得到 PCSrc。
 
 > [!tip] 课堂强调
 > 这张数据通路图、后面的控制表以及多周期的带控制数据通路图都**不要求死记或默画**，看懂其中的逻辑即可；实际处理器的控制要复杂得多，这里只是最简单的一套控制逻辑。[^s2b8]
@@ -191,7 +193,9 @@ R 型与访存指令共用 ALU 和寄存器堆写端口，但数据来源不同�
 | sd | 1 | X | 0 | 0 | 1 | 0 | 0 | 0 |
 | beq | 0 | X | 0 | 0 | 0 | 1 | 0 | 1 |
 
-![R-format、ld、sd、beq 四类指令的单周期控制信号取值表](../assets/l03-single-cycle-control-table.png)
+![单周期控制信号表](../assets/l03-single-cycle-control-table.png)
+
+图：R-format、ld、sd、beq 四类指令的单周期控制信号取值表。
 
 X 表示“无关”（don't care）：`sd` 和 `beq` 不写寄存器堆（RegWrite = 0），所以 MemtoReg 选哪一路都不影响结果。
 
@@ -220,17 +224,17 @@ flowchart LR
 
 **优点**：
 
-- **CPI = 1**：每条指令恰好一个周期，并且永远是 1。[^s2b8]
+- **$\mathrm{CPI}=1$**：每条指令恰好一个周期，并且永远是 1。[^s2b8]
 - **简单、易于理解**。[^s1p129]
 
-CPI = 1 并不是性能上限：后续课程讲到的架构（如每周期完成多条指令的超标量处理器）CPI 一般都**小于 1**。单周期的特点只是 CPI 恒定，代价全部落在时钟周期上。[^s2b8]
+$\mathrm{CPI}=1$ 并不是性能上限：后续课程讲到的架构（如每周期完成多条指令的超标量处理器）CPI 一般都**小于 1**。单周期的特点只是 CPI 恒定，代价全部落在时钟周期上。[^s2b8]
 
 **缺点**：
 
 1. **时钟周期利用率低**。[^s1p50] 时钟周期必须按最慢的指令来定。`ld` 要依次经过取指、读寄存器堆、ALU、数据存储器、写回，是最长的路径；`sd` 不需要写回，比 `ld` 短，但也只能占用同样长的周期，剩余时间被浪费：时序图上 Load 占满一个周期，Store 之后跟着一段 Waste。对浮点乘法这类更复杂的指令，这个问题更严重：只要指令集中有一条慢指令，所有指令都要跟着变慢。
 2. **浪费面积**。[^s1p51] 由于一个周期内部件不能共享，一些功能单元必须复制：除了 ALU 外还要有专门更新 PC 的加法器；指令存储器和数据存储器也必须分开，而在更好的设计中二者本可以合并。
 
-时钟周期下限的具体约束式（$T_{\rm clk\_q}$、$T_{\rm max\_comb}$、$T_s$）见 [[03 数据通路部件与时钟]]。为解决这两个问题，下一节把一条指令拆成多个较短的周期并复用部件，见 [[05 多周期数据通路]]。
+时钟周期下限的具体约束式（$T_{\rm clk\_q}$、$T_{\rm max\_comb}$、$T_s$）见 [03 数据通路部件与时钟](03-datapath-elements-and-clocking.md)。为解决这两个问题，下一节把一条指令拆成多个较短的周期并复用部件，见 [05 多周期数据通路](05-multicycle-datapath.md)。
 
 > [!question]- 自测：执行 `or x7, x8, x9` 时，若控制单元错误地给出 ALUSrc = 1，会发生什么？
 > ALU 第二个输入会选 Imm Gen 的输出而不是 `x9`。R 型指令没有立即数字段，Imm Gen 会把 bits 31-20（即 funct7 和 rs2 字段）当成立即数扩展，结果变成 `x8 OR 某个无意义常数`，写入 `x7` 的值错误。

@@ -15,7 +15,7 @@ section: "section-1"
 > [!abstract] 本节要点
 > - ALU 以 A、B 和操作选择 m 为输入，输出 result 及状态位 zero、ovf；后缀 `i` 表示立即数操作数，`u` 表示无符号；RISC-V 对所有算术/逻辑运算**都不检测溢出**，需要时由软件插入额外指令检查。
 > - 补码取负 = 按位取反再加 1；4 位补码范围 $-2^3 \sim 2^3-1$，即 $-8 \sim 7$；“取负”与“按位取反”是两回事。
-> - 全加器：$S = A\oplus B\oplus C_{in}$（奇校验函数），$C_{out} = AB + AC_{in} + BC_{in}$（多数函数）；32 个全加器首尾串联得到行波进位加法器。
+> - 全加器：$S = A\oplus B\oplus C_{\mathrm{in}}$（奇校验函数），$C_{\mathrm{out}} = AB + AC_{\mathrm{in}} + BC_{\mathrm{in}}$（多数函数）；32 个全加器首尾串联得到行波进位加法器。
 > - 加/减法器只需一根控制线：control=1 时每个 $B_i$ 经异或门取反，同一根线接到 $c_0$ 提供“+1”，于是 $A-B = A+\overline{B}+1$。
 > - 有符号溢出 ⇔ 进入最高位的进位 $\oplus$ 最高位送出的进位 $=1$；逻辑移位补 0，算术右移 `sra` 补符号位，补码下不需要 `sla`；移位由独立于 ALU 的桶形移位器完成。
 
@@ -39,7 +39,7 @@ RISC-V ALU 必须支持 ISA 中的这些运算：[^s1p3]
 | 逻辑 | `and`、`andi`、`nor`、`or`、`ori`、`xor`、`xori` |
 | 比较/分支 | `beq`、`bne`、`slt`、`slti`、`sltiu`、`sltu` …… |
 
-这些运算在 x86、MIPS 等其他 ISA 的 ALU 中基本相同；乘除法的硬件见 [[02 乘除法与浮点数]]。
+这些运算在 x86、MIPS 等其他 ISA 的 ALU 中基本相同；乘除法的硬件见 [02 乘除法与浮点数](02-multiplication-division-and-floating-point.md)。
 
 ### 指令后缀的含义
 
@@ -62,7 +62,7 @@ RISC-V ALU 必须支持 ISA 中的这些运算：[^s1p3]
 > 因此用 `lb` 和 `lbu` 读同一个字节，寄存器里会得到不同的值。
 
 > [!note] 补充解释
-> 按 [RISC-V 非特权规范](https://riscv.org/technical/specifications/)：`sltiu` 的 12 位立即数实际上也先做符号扩展，然后再按无符号数比较；移位指令 `slli/srli/srai` 的立即数是移位量 shamt，本身就是非负的小整数。RV64 中 64 位载入只有 `ld`，没有 `ldu`；`nor` 也不是 RISC-V 基本指令（来自 MIPS 的写法）。源材料的列表侧重说明“哪些指令需要特殊扩展处理”，细节以规范为准。
+> 按 RISC-V 官方非特权规范的 [RV32I 基本指令集](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html)与 [RV64I 基本指令集](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv64.html)：`sltiu` 的 12 位立即数实际上也先做符号扩展，然后再按无符号数比较；移位指令 `slli/srli/srai` 的立即数是移位量 shamt，本身就是非负的小整数。RV64 中 64 位载入只有 `ld`，没有 `ldu`；`nor` 也不是 RISC-V 基本指令（来自 MIPS 的写法）。源材料的列表侧重说明“哪些指令需要特殊扩展处理”，细节以规范为准。
 
 ### RISC-V 不检测溢出
 
@@ -109,11 +109,11 @@ $$
 
 多位加法可以拆成逐位相加，每一位都要同时处理本位的两个数和低位送来的进位，这个“一位加法”单元就是全加器。
 
-**全加器**（full adder, FA）有三个输入 A、B、carry_in 和两个输出 S、carry_out；**半加器**（half adder）则没有低位进位输入。二者的区别就在于是否接收低位进位。[^s2b1]
+**全加器**（full adder, FA）有三个输入 $A$、$B$、$C_{\mathrm{in}}$ 和两个输出 $S$、$C_{\mathrm{out}}$，其中 $C_{\mathrm{in}}$、$C_{\mathrm{out}}$ 分别表示进位输入与进位输出（电路图中的 `carry_in`、`carry_out`）；**半加器**（half adder）则没有低位进位输入。二者的区别就在于是否接收低位进位。[^s2b1]
 
 真值表：[^s1p5]
 
-| A | B | carry_in | carry_out | S |
+| $A$ | $B$ | $C_{\mathrm{in}}$ | $C_{\mathrm{out}}$ | $S$ |
 |---|---|---|---|---|
 | 0 | 0 | 0 | 0 | 0 |
 | 0 | 0 | 1 | 0 | 1 |
@@ -126,14 +126,14 @@ $$
 
 从真值表读出两个逻辑式：[^s1p5]
 $$
-S = A \oplus B \oplus \text{carry\_in}
+S = A \oplus B \oplus C_{\mathrm{in}}
 $$
 $$
-\text{carry\_out} = A\cdot B + A\cdot \text{carry\_in} + B\cdot \text{carry\_in}
+C_{\mathrm{out}} = A\cdot B + A\cdot C_{\mathrm{in}} + B\cdot C_{\mathrm{in}}
 $$
 
 - $S$ 是**奇校验函数**（odd parity function）：三个输入中 1 的个数为奇数时 $S=1$。
-- carry_out 是**多数函数**（majority function）：三个输入中至少两个为 1 时输出 1。
+- $C_{\mathrm{out}}$ 是**多数函数**（majority function）：三个输入中至少两个为 1 时输出 1。
 
 ## 行波进位加法器与加/减法器
 
@@ -156,17 +156,19 @@ $$
 1. **按位取反**：每个 $B_i$ 先与控制信号 control（0=add，1=sub）做异或后再送入全加器。异或门的一个输入为 0 时输出等于另一输入，为 1 时输出取反，所以 control=0 时送入 $B_i$，control=1 时送入 $\overline{B_i}$。
 2. **加 1**：把同一根 control 线接到最低位进位 $c_0$。做减法时 control=1，正好让 $c_0=1$，在最低位加上 1。[^s1p6]
 
-于是同一套电路满足
+用 $u$ 表示控制信号 `control`（$u=0$ 做加法，$u=1$ 做减法），同一套电路满足
 $$
-\text{Sum} = A + (B \oplus \text{control}) + \text{control} =
+S = A + (B \oplus u) + u =
 \begin{cases}
-A + B, & \text{control}=0 \\
-A + \overline{B} + 1 = A - B, & \text{control}=1
+A + B, & u=0 \\
+A + \overline{B} + 1 = A - B, & u=1
 \end{cases}
 $$
-其中 $B\oplus\text{control}$ 表示每一位都与 control 异或。
+其中 $B\oplus u$ 表示 $B$ 的每一位都与控制位 $u$ 异或。
 
-![32 位行波进位加法/减法器：每位 B 与控制信号异或，控制信号同时作为 c0 提供“+1”，进位逐级传递到 c32；左侧示例 0111 − 0110 = 0001](../assets/l03-ripple-carry-adder-subtractor.png)
+![行波进位加法减法器](../assets/l03-ripple-carry-adder-subtractor.png)
+
+图：32 位行波进位加法/减法器：每位 $B_i$ 与控制信号异或，控制信号同时作为 $c_0$ 提供“+1”，进位逐级传递到 $c_{32}$；左侧示例 $0111_2-0110_2=0001_2$。
 
 > [!example] 例：用加/减法器计算 $0111 - 0110$（4 位）
 > 1. control=1，$B=0110$ 逐位取反得 $1001$；
@@ -175,7 +177,7 @@ $$
 > 3. 最高位进位 $c_4=1$ 落在 4 位之外被丢弃，结果为 $0001$，即 $7-6=1$。[^s1p6]
 
 > [!warning] 易错点
-> 做减法时 carry_out=1 并不表示溢出。本例 $c_4=1$，但进入最高位的进位 $c_3$ 也是 1，二者异或为 0，结果正确。有符号溢出要用下一节的规则判断。
+> 做减法时 $C_{\mathrm{out}}=1$ 并不表示溢出。本例 $c_4=1$，但进入最高位的进位 $c_3$ 也是 1，二者异或为 0，结果正确。有符号溢出要用下一节的规则判断。
 
 ## 溢出检测（Overflow Detection）
 
@@ -192,11 +194,11 @@ RISC-V 硬件不报告溢出，软件若要检查，就需要一个简单可靠�
 
 一正一负相加（或同号相减）永远不会溢出，因为结果的绝对值不会超过较大的操作数。
 
-**判断规则**：设 $n$ 位加法中，进入最高位（MSB）的进位为 $c_{n-1}$，最高位送出的进位为 $c_n$，则[^s1p7]
+**判断规则**：设 $n$ 位加法中，进入最高位（MSB）的进位为 $c_{n-1}$，最高位送出的进位为 $c_n$，用 $O$ 表示溢出标志，则[^s1p7]
 $$
-\text{overflow} = c_{n-1} \oplus c_n
+O = c_{n-1} \oplus c_n
 $$
-结果为 1 表示溢出，为 0 表示没有溢出。4 位时就是比较第 4 位的进位输入与第 5 位（carry_out）的值。[^s2b2]
+$O=1$ 表示溢出，$O=0$ 表示没有溢出。4 位时就是比较第 4 位的进位输入与第 5 位（carry_out）的值。[^s2b2]
 
 > [!example] 例 1：$7 + 3$（4 位有符号）
 > 逐位相加 $0111 + 0011$：
@@ -220,7 +222,7 @@ $$
 
 ### 为什么这条规则成立
 
-只看最高位：设两个操作数的符号位为 $a$、$b$，结果符号位 $s = a\oplus b\oplus c_{n-1}$，$c_n = \text{maj}(a,b,c_{n-1})$。
+只看最高位：设两个操作数的符号位为 $a$、$b$，结果符号位 $s = a\oplus b\oplus c_{n-1}$，$c_n = \operatorname{maj}(a,b,c_{n-1})$。
 
 - $a=b=0$（正+正）：$c_n=0$；若 $c_{n-1}=1$，则 $s=1$ 变负，正好溢出，此时 $c_{n-1}\oplus c_n=1$。
 - $a=b=1$（负+负）：$c_n=1$；若 $c_{n-1}=0$，则 $s=0$ 变正，正好溢出，此时 $c_{n-1}\oplus c_n=1$。

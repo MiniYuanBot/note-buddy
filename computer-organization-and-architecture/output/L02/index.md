@@ -11,11 +11,11 @@ lecture: "L02"
 
 [课程目录](../index.md)
 
-本讲回答两个问题：怎样定量地说清一台计算机“有多快”，以及软件与硬件之间靠什么“语言”对话。前三章从响应时间、吞吐量和时钟出发，推导性能铁律 CPU time = IC × CPI × CC，再讨论跨程序汇总性能的正确平均方法和 Amdahl 定律；后五章从 ISA 作为软硬件契约与 CISC/RISC 之争出发，系统介绍 RISC-V 的指令格式、算术与访存、分支与过程调用、原子同步和寻址方式。阅读前需要熟悉二进制/十六进制、补码与符号扩展，最好在 ICS 中接触过一种汇编语言（如 Y86/x86）和函数调用栈。
+本讲回答两个问题：怎样定量地说清一台计算机“有多快”，以及软件与硬件之间靠什么“语言”对话。前三章从响应时间、吞吐量和时钟出发，推导性能铁律 $T_{\mathrm{CPU}}=\mathrm{IC}\times\mathrm{CPI}\times\mathrm{CC}$，再讨论跨程序汇总性能的正确平均方法和 Amdahl 定律；后五章从 ISA 作为软硬件契约与 CISC/RISC 之争出发，系统介绍 RISC-V 的指令格式、算术与访存、分支与过程调用、原子同步和寻址方式。阅读前需要熟悉二进制/十六进制、补码与符号扩展，最好在 ICS 中接触过一种汇编语言（如 Y86/x86）和函数调用栈。
 
 ## 章节导航
 
-- [01 性能指标与时钟](chapters/01-performance-metrics-and-clock.md)：响应时间、吞吐量、快n倍定义与时钟周期
+- [01 性能指标与时钟](chapters/01-performance-metrics-and-clock.md)：响应时间、吞吐量、快 $n$ 倍定义与时钟周期
 - [02 CPI与性能铁律](chapters/02-cpi-and-iron-law.md)：CPI、IPC与性能铁律及指令组合计算
 - [03 性能汇总与Amdahl定律](chapters/03-performance-summary-and-amdahls-law.md)：几何/调和平均、Amdahl定律与性价比
 - [04 ISA抽象与RISC思想](chapters/04-isa-abstraction-and-risc.md)：ISA是软硬件契约，RISC以简单指令取胜
@@ -30,7 +30,7 @@ lecture: "L02"
 
 ```mermaid
 flowchart TD
-  PERF["性能 = 1 / 执行时间"] --> IRON["性能铁律 IC × CPI × CC"]
+  PERF["用执行时间的倒数度量性能"] --> IRON["性能铁律：指令数、CPI、时钟周期"]
   IRON --> AVG["跨程序汇总：几何平均 / 调和平均"]
   IRON --> AMD["Amdahl 定律：加速常见情况"]
   IRON --> ISA["ISA：软硬件契约，影响 IC 与 CPI"]
@@ -47,21 +47,21 @@ flowchart TD
 
 | 用途 | 公式 | 要点 |
 | --- | --- | --- |
-| 性能与“快 $n$ 倍” | $\text{perf}=1/T$；$T_Y/T_X=n$ | 比值就是 $n$，不是 $n+1$ |
-| 时钟 | $CC=1/CR$ | 1 ns ↔ 1 GHz |
-| 有效 CPI | $\sum_i \text{CPI}_i\times\text{IC}_i$ | $\text{IC}_i$ 为动态执行占比 |
-| 性能铁律 | $T=\text{IC}\times\text{CPI}\times CC$ | IC←ISA/编译器，CPI←ISA/组织，CC←组织/工艺 |
-| 汇总归一化时间 | $\text{GM}=\sqrt[n]{\prod_i T_i/T_{\text{ref},i}}$ | 与参考机无关 |
-| 平均 IPC | $\text{HMean}(\text{IPC}_i)=1/\text{Average CPI}$ | IPC 不能算术平均 |
+| 性能与“快 $n$ 倍” | $\Pi=1/T$；$T_Y/T_X=n$ | 比值就是 $n$，不是 $n+1$ |
+| 时钟 | $\mathrm{CC}=1/\mathrm{CR}$ | 1 ns ↔ 1 GHz |
+| 有效 CPI | $\mathrm{CPI}_{\mathrm{eff}}=\sum_i w_i\mathrm{CPI}_i$ | $w_i$ 为动态执行占比 |
+| 性能铁律 | $T_{\mathrm{CPU}}=\mathrm{IC}\times\mathrm{CPI}\times\mathrm{CC}$ | IC←ISA/编译器，CPI←ISA/组织，CC←组织/工艺 |
+| 汇总归一化时间 | $\mathrm{GM}=\sqrt[n]{\prod_i T_i/T_{R,i}}$ | $T_{R,i}$ 为参考机执行时间；与参考机无关 |
+| 平均 IPC | $\operatorname{H}(\mathrm{IPC}_i)=1/\overline{\mathrm{CPI}}$ | IPC 不能算术平均 |
 | Amdahl 定律 | $\dfrac{1}{(1-F)+F/S}$ | $F$ 是原执行时间中的比例；上限 $1/(1-F)$ |
-| 访存地址 | 基址寄存器 + sext(imm$_{12}$) | 偏移以字节计，$-2048\sim2047$ |
-| 分支 / 跳转目标 | PC + sext(imm) | 分支约 $\pm2^{10}$ 字，`jal` 约 $\pm1$ MiB |
+| 访存地址 | $\mathrm{Reg}[\mathrm{rs1}]+\operatorname{sext}(\mathrm{imm}_{12})$ | 偏移以字节计，$-2048\sim2047$ |
+| 分支 / 跳转目标 | $\mathrm{PC}+\operatorname{sext}(\mathrm{imm})$ | 分支约 $\pm2^{10}$ 字，`jal` 约 $\pm1$ MiB |
 | 32 位常量 / 长跳转 | `lui` 高 20 位 + `addi`/`jalr` 低 12 位 | 低 12 位第 11 位为 1 时高 20 位加 1 |
 
 ## 不确定事项
 
 - 08 Case 1 若 a0 与 a3 恰在同一保留集合内，SC 可能成功；课堂结论“应该是 0”与规范推演不一致，笔记按规范写为失败
-- 07 内存布局中代码段起始地址在课件扫描中不清，按 RISC-V 版教材取 0000 0000 0040 0000hex
+- 07 内存布局中代码段起始地址在课件扫描中不清，按 RISC-V 版教材取 $(\mathtt{0000\,0000\,0040\,0000})_{16}$
 - 02 课堂提到乘法约 20–30 周期、加法约 10–14 周期的数字来自 ASR 且仅作示意，笔记未采用具体数值
 
 > [!info]- 来源

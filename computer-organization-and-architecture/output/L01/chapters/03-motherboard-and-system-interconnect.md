@@ -33,7 +33,9 @@ section: "section-3"
 - **存储接口**：SATA 插座、PATA 插座。
 - **USB 插针（USB headers）**：用来引出机箱前面板的 USB 口。
 
-![一块约 20 年前的主板：标出 CPU 插座、北桥、南桥、RAM 插槽、PCIx16/PCI 插槽、SATA 与 PATA 接口和 USB 插针](../assets/l01-mainboard-components.png)
+![主板部件与接口](../assets/l01-mainboard-components.png)
+
+图：一块约 20 年前的主板：标出 CPU 插座、北桥、南桥、RAM 插槽、PCIx16/PCI 插槽、SATA 与 PATA 接口和 USB 插针。
 
 现代主板（以 Intel Z790 芯片组主板为例）大致可以分为六个区域：左上角的 I/O 接口区、正上方的 CPU 区、右侧的内存区、下方的扩展区、右下角的芯片组区，以及四周的接口和针脚区。[^s2b10] 与旧主板相比，两者的主要区别如下：
 
@@ -47,13 +49,13 @@ section: "section-3"
 | CPU 插座 | 插座上是孔，针脚在 CPU 上 | 插座上是针脚（LGA），CPU 上是触点 |
 | 键鼠接口 | 有圆形的 PS/2 口 | 改用 USB |
 
-下面各小节解释这些变化背后的原因。数字系统由逻辑、状态和互连三类模块构成，这一视角见 [[02 构建模块与研究方法]]；把主板抽象成系统框图并由此引出内存墙，见 [[04 系统框图与内存墙]]。
+下面各小节解释这些变化背后的原因。数字系统由逻辑、状态和互连三类模块构成，这一视角见 [02 构建模块与研究方法](02-building-blocks-and-research-method.md)；把主板抽象成系统框图并由此引出内存墙，见 [04 系统框图与内存墙](04-system-block-diagram-and-memory-wall.md)。
 
 ## CPU 插座与 x86 指令集
 
 CPU 插座的物理标准有很多种，不同品牌、不同代的 CPU 所用的插座也不相同。例如 Intel LGA1700 插座有 1700 根针脚，支持第 12、13、14 代酷睿处理器，因此选购主板前必须确认插座与 CPU 兼容。[^s2b10]
 
-不过，**物理标准远不如指令集体系结构（ISA）重要**：插座决定的只是 CPU 能不能装上去，ISA 决定的是软件能不能在这颗 CPU 上运行。ISA 作为软硬件接口的含义见 [[01 体系结构定义与系统栈]]。[^s1p34]
+不过，**物理标准远不如指令集体系结构（ISA）重要**：插座决定的只是 CPU 能不能装上去，ISA 决定的是软件能不能在这颗 CPU 上运行。ISA 作为软硬件接口的含义见 [01 体系结构定义与系统栈](01-architecture-definition-and-system-stack.md)。[^s1p34]
 
 - IBM PC 兼容机都兼容 Intel 80386。幻灯片上写作“80836”，系笔误。[^s1p34]
 - **x86** 是最初由 Intel 设计的指令集，生产 x86 处理器的厂商有 Intel、AMD、VIA 等。约 20 年前，市面上的处理器还有 IBM、TI 等多家的其他架构；今天个人电脑上几乎只剩 x86 及其 64 位扩展。[^s2b12]
@@ -120,7 +122,7 @@ DDR 系列各代之间的差异主要有三点：
 > 不是所有 M.2 都直连 CPU。主板介绍视频说第一个 M.2（PCIe 4.0 x4）与 PCIe 5.0 x16 插槽一样直连 CPU；课堂讲解则说该 M.2 连在南桥上。[^s2b12] 实际的 Z790 平台上，CPU 提供 x16 插槽和一个 x4 M.2 的通道，其余 M.2 挂在芯片组上，所以视频对“第一个 M.2”的说法更准确。判断某个 M.2 是否直连 CPU，要查主板说明书的通道分配图。
 
 > [!info] 可视化资源
-> [Wikipedia：Northbridge (computing)](https://en.wikipedia.org/wiki/Northbridge_(computing))：条目中有 2007 年与 2015 年两种芯片组布局示意图，可对照北桥独立存在与北桥并入 CPU 后的连接关系。
+> [Wikipedia：Northbridge (computing)](https://en.wikipedia.org/wiki/Northbridge_%28computing%29)：条目中有 2007 年与 2015 年两种芯片组布局示意图，可对照北桥独立存在与北桥并入 CPU 后的连接关系。
 
 ## 南桥（芯片组）与争用
 

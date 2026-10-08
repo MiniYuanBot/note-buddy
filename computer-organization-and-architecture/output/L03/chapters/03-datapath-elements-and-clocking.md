@@ -35,15 +35,15 @@ section: "section-3"
 | 指令 | RTL 描述 |
 | --- | --- |
 | 公共取指 | $PC \leftarrow PC + 4$ |
-| add | $\text{Reg}[rd] \leftarrow \text{Reg}[rs1] + \text{Reg}[rs2]$ |
-| ld（load） | $\text{Reg}[rd] \leftarrow \text{MEM}[\text{Reg}[rs1] + \text{sext}(imm)]$ |
-| sd（store） | $\text{MEM}[\text{Reg}[rs1] + \text{sext}(imm)] \leftarrow \text{Reg}[rs2]$ |
-| beq | 若 $\text{Reg}[rs1] = \text{Reg}[rs2]$，则 $PC \leftarrow PC + (\text{sext}(imm) \ll 1)$；否则 $PC \leftarrow PC + 4$ |
+| add | $\mathrm{Reg}[rd] \leftarrow \mathrm{Reg}[rs1] + \mathrm{Reg}[rs2]$ |
+| ld（load） | $\mathrm{Reg}[rd] \leftarrow \mathrm{MEM}[\mathrm{Reg}[rs1] + \operatorname{sext}(imm)]$ |
+| sd（store） | $\mathrm{MEM}[\mathrm{Reg}[rs1] + \operatorname{sext}(imm)] \leftarrow \mathrm{Reg}[rs2]$ |
+| beq | 若 $\mathrm{Reg}[rs1] = \mathrm{Reg}[rs2]$，则 $PC \leftarrow PC + (\operatorname{sext}(imm) \ll 1)$；否则 $PC \leftarrow PC + 4$ |
 
 其中 sext 表示符号扩展，访存地址 = 基址寄存器 + 符号扩展后的偏移量。
 
 > [!warning] 易错点
-> 源材料的 RTL 表格和部件图沿用了 MIPS 写法：寄存器字段写成 Rs/Rt/Rd，立即数写成 Imm16（16 位），扩展器标为 Extend 16→64，load 的目的寄存器写成 Rt，分支目标写成 $PC + 4 + 4\times\text{sign\_extend}(Imm16)$。[^s1p24] 这些是 MIPS 的语义。RISC-V 中：源/目的寄存器字段是 rs1、rs2、rd；I/S/B 型立即数是 12 位；分支目标以**当前指令的 PC** 为基准，偏移以 2 字节为单位，即 $PC + (\text{sext}(imm)\ll1)$，不是“PC+4 再加 4 倍偏移”。做题时按 RISC-V 语义计算。
+> 源材料的 RTL 表格和部件图沿用了 MIPS 写法：寄存器字段写成 Rs/Rt/Rd，立即数写成 Imm16（16 位），扩展器标为 Extend 16→64，load 的目的寄存器写成 Rt，分支目标写成 $PC + 4 + 4\times\operatorname{sext}(Imm16)$。[^s1p24] 这些是 MIPS 的语义。RISC-V 中：源/目的寄存器字段是 rs1、rs2、rd；I/S/B 型立即数是 12 位；分支目标以**当前指令的 PC** 为基准，偏移以 2 字节为单位，即 $PC + (\operatorname{sext}(imm)\ll1)$，不是“PC+4 再加 4 倍偏移”。做题时按 RISC-V 语义计算。
 
 RTL 之外还有更底层的**门级**（gate-level）视角：直接展示每个时钟周期里各个逻辑门怎样翻转、互相传递信号，从而实现处理功能，ARM1 处理器的门级仿真就是这样的例子。[^s1p25] 本讲从 RTL 这一层出发，把处理器拆成部件，再一步步组装成逻辑层面的处理器。
 
@@ -53,8 +53,8 @@ RTL 之外还有更底层的**门级**（gate-level）视角：直接展示每�
 
 **组合元件**（combinational element）只对数据做运算：输出完全由当前输入决定，不记忆任何东西。
 
-- **扩展器**（Extend）：把指令中的立即数扩展成 64 位数据（部件图沿用 MIPS 标注 16→64，RISC-V 实际是 12 位立即数扩展到 64 位）。扩展方式见 [[01 ALU与整数加减]]。
-- **ALU**：对两个 64 位输入做运算，输出 ALU result，同时给出状态输出 **zero**（结果是否为 0）和 **overflow**（是否溢出）。ALU 支持的运算见 [[01 ALU与整数加减]]。
+- **扩展器**（Extend）：把指令中的立即数扩展成 64 位数据（部件图沿用 MIPS 标注 16→64，RISC-V 实际是 12 位立即数扩展到 64 位）。扩展方式见 [01 ALU与整数加减](01-alu-and-integer-addition.md)。
+- **ALU**：对两个 64 位输入做运算，输出 ALU result，同时给出状态输出 **zero**（结果是否为 0）和 **overflow**（是否溢出）。ALU 支持的运算见 [01 ALU与整数加减](01-alu-and-integer-addition.md)。
 - **多路选择器**（multiplexor, Mux）：一种简单的多功能逻辑单元，根据选择信号让输入 0 或输入 1 之一通过。当同一个部件的输入可能来自不同来源时，就用 Mux 选择。[^s1p27]
 
 **存储元件**（storage / state element）保存数据，即处理器的状态：
@@ -80,7 +80,7 @@ RTL 之外还有更底层的**门级**（gate-level）视角：直接展示每�
 | Write Enable | 寄存器堆 | 是否把 Write Data 写入 Write Addr 指定的寄存器 |
 | MemRead / MemWrite | 数据存储器 | 是否读 / 是否写数据存储器 |
 
-此外 ALU 的 zero、overflow 是反向输出给控制逻辑的状态信号（例如 beq 用 zero 判断两数是否相等）。这些信号由控制单元根据指令的 opcode、funct 等字段产生，具体取值和控制表见 [[04 单周期数据通路]]。
+此外 ALU 的 zero、overflow 是反向输出给控制逻辑的状态信号（例如 beq 用 zero 判断两数是否相等）。这些信号由控制单元根据指令的 opcode、funct 等字段产生，具体取值和控制表见 [04 单周期数据通路](04-single-cycle-datapath.md)。
 
 ## CPU 时钟与边沿触发
 
@@ -123,7 +123,9 @@ flowchart LR
 - $T_s$：**建立时间**（setup time），时钟沿到来**之前**，寄存器输入必须保持稳定的时间。
 - $T_h$：**保持时间**（hold time），时钟沿到来**之后**，寄存器输入还必须继续保持稳定的时间。
 
-![边沿触发下一个周期必须覆盖寄存器输出延迟、最长组合逻辑延迟与建立时间：T ≥ T_clk-q + T_max_comb + T_s](../assets/l03-single-cycle-timing.png)
+![单周期数据通路的时序约束](../assets/l03-single-cycle-timing.png)
+
+图：边沿触发下一个周期必须覆盖寄存器输出延迟、最长组合逻辑延迟与建立时间：$T_{\mathrm{cycle}}\ge T_{\mathrm{clk\_q}}+T_{\mathrm{max\_comb}}+T_s$。
 
 时序图上，从第一个上升沿开始依次是 $T_{\rm clk\_q}$、$T_{\rm max\_comb}$、$T_s$，它们必须在下一个上升沿之前全部结束；$T_h$ 跨在下一个上升沿之后。因此时钟周期 $T_{\rm cycle}$（源材料记为 $T_t$）必须满足：[^s1p32]
 
@@ -144,7 +146,7 @@ $$
 > 3. $T_h=10\,\text{ps}<T_{\rm clk\_q}=30\,\text{ps}$，保持时间自然满足，不进入公式。
 
 > [!warning] 易错点
-> - 公式里用的是组合逻辑的**最长**延迟，不是平均延迟。单周期处理器中所有指令共用一个周期，周期由最慢的指令路径决定（这正是单周期“CPI=1 但周期长”的原因，见 [[04 单周期数据通路]]）。
+> - 公式里用的是组合逻辑的**最长**延迟，不是平均延迟。单周期处理器中所有指令共用一个周期，周期由最慢的指令路径决定（这正是单周期“$\mathrm{CPI}=1$ 但周期长”的原因，见 [04 单周期数据通路](04-single-cycle-datapath.md)）。
 > - $T_h$ 不加进周期公式。$T_s$ 约束的是时钟沿**之前**，$T_h$ 约束的是时钟沿**之后**，二者不要混淆。
 
 ## 写控制信号

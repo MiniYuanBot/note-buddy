@@ -52,10 +52,10 @@ sub x5, x6, x7    # x5 = x6 - x7
 字段宽度合计 $7+5+5+3+5+7=32$。两个设计要点：
 
 - **为什么寄存器号是 5 位**：寄存器共 32 个，$\log_2 32 = 5$，所以 rs1、rs2、rd 各需 5 位。
-- **为什么除 opcode 外还要 funct3、funct7**：RISC-V 指令数量很多，仅靠 7 位 opcode 不足以区分全部指令；opcode 先确定一大类，funct3 和 funct7 再在这一类中指定具体的子操作。6 种格式的整体排布见 [[05 RISC-V概览与指令格式]]。
+- **为什么除 opcode 外还要 funct3、funct7**：RISC-V 指令数量很多，仅靠 7 位 opcode 不足以区分全部指令；opcode 先确定一大类，funct3 和 funct7 再在这一类中指定具体的子操作。6 种格式的整体排布见 [05 RISC-V概览与指令格式](05-risc-v-overview-and-instruction-formats.md)。
 
 > [!note] 补充解释
-> 幻灯片没有给出具体二进制值。按 RISC-V 规范，`add x5, x6, x7` 的编码为 funct7=`0000000`、rs2=`00111`、rs1=`00110`、funct3=`000`、rd=`00101`、opcode=`0110011`，拼起来是 `0x007302B3`；`sub` 只把 funct7 改为 `0100000`。这正说明 funct7 是在同一 opcode 下区分子操作的。参见 [RISC-V 规范](https://riscv.org/technical/specifications/)。
+> 幻灯片没有给出具体二进制值。按 RISC-V 规范，`add x5, x6, x7` 的编码为 funct7=`0000000`、rs2=`00111`、rs1=`00110`、funct3=`000`、rd=`00101`、opcode=`0110011`，拼起来是 `0x007302B3`；`sub` 只把 funct7 改为 `0100000`。这正说明 funct7 是在同一 opcode 下区分子操作的。参见 [RISC-V 官方非特权规范：RV32I 的 Integer Register-Register Operations](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html)。
 
 ## 寄存器约定与寄存器堆（Register File）
 
@@ -76,14 +76,16 @@ sub x5, x6, x7    # x5 = x6 - x7
 | x18–x27 | 18–27 | 保存寄存器（saved） |
 | x28–x31 | 28–31 | 临时寄存器（temporaries） |
 
-![RISC-V 寄存器约定：x0 恒为 0，ra、sp、gp、tp，以及临时、保存、参数/返回值寄存器的编号范围](../assets/l02-register-convention.png)
+![RISC-V 寄存器约定](../assets/l02-register-convention.png)
+
+图：RISC-V 寄存器约定：x0 恒为 0，ra、sp、gp、tp，以及临时、保存、参数/返回值寄存器的编号范围。
 
 要点说明：
 
 - **x0**：需要 0 时无需另外装入，直接写 x0 即可，它永远读出 0。
 - **ra**：调用函数后要返回到哪里，返回地址就写在 x1 中。
 - **sp、gp、tp**：在访问栈、全局数据和线程数据等内存区域时作为基址使用。
-- **临时寄存器与保存寄存器**：临时寄存器可以自由放任何数据，函数调用时其中的值不受保护、可被替换；保存寄存器中的值在调用别的函数前后必须保持不变，想用它的函数要先保存原值、返回前恢复。谁负责保存（caller/callee-saved）以及栈的用法见 [[07 分支过程调用与栈]]。
+- **临时寄存器与保存寄存器**：临时寄存器可以自由放任何数据，函数调用时其中的值不受保护、可被替换；保存寄存器中的值在调用别的函数前后必须保持不变，想用它的函数要先保存原值、返回前恢复。谁负责保存（caller/callee-saved）以及栈的用法见 [07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md)。
 - **参数 / 返回值**：调用函数时用 x10–x17 传参，返回时用它们带回结果。
 
 ### 寄存器堆的结构
@@ -162,7 +164,9 @@ flowchart LR
 
 `ld` 使用 **I 格式**：immediate | rs1 | funct3 | rd | opcode。`ld x5, 24(x6)` 中，立即数 24 进 immediate 字段，基址 x6 进 rs1，目的 x5 进 rd，`ld` 本身由 opcode 与 funct3 确定。[^s1p53]
 
-![ld x5, 24(x6) 映射到 I 格式字段，x6 指向 0x12004094，访问地址为基址加偏移 24](../assets/l02-load-address-example.png)
+![加载指令的地址计算与编码](../assets/l02-load-address-example.png)
+
+图：`ld x5, 24(x6)` 映射到 I 格式字段，x6 指向 0x12004094，访问地址为基址加偏移 24。
 
 图中内存按 word address（十六进制）标注，地址只画了低 32 位（“Omit the MSB 32-bit addresses”），实际地址是 64 位。
 
@@ -241,7 +245,7 @@ addi sp, sp, 4    # sp = sp + 4
 `addi` 使用 I 格式：immediate | rs1 | funct3 | rd | opcode，立即数放在最左边的 12 位，与 `ld`、`lb` 的格式相同。
 
 > [!note] 补充解释
-> 幻灯片中 `sp` 每次加 4 沿用了 32 位（MIPS）的习惯。在 RV64 中寄存器是 64 位，压栈或弹栈一个 doubleword 通常按 8 字节调整 `sp`。栈的使用见 [[07 分支过程调用与栈]]。
+> 幻灯片中 `sp` 每次加 4 沿用了 32 位（MIPS）的习惯。在 RV64 中寄存器是 64 位，压栈或弹栈一个 doubleword 通常按 8 字节调整 `sp`。栈的使用见 [07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md)。
 
 ### 用 lui 构造 32 位常量
 

@@ -35,7 +35,7 @@ section: "section-8"
 
 在 CISC 中，这一过程可以直接做成一条复杂指令 **C&S**（compare-and-swap，比较并交换）：CISC 本就允许为复杂操作增加专门的指令。RISC 是精简指令集，必须复用已有的指令格式，不能为此引入一条"读—比较—写"三合一的复杂指令，于是 RISC-V 用两条 R 型指令代替它，这就是下一小节的 LR/SC。[^s1p67]
 
-指令格式本身（R 型等 6 种格式）见 [[05 RISC-V概览与指令格式]]。
+指令格式本身（R 型等 6 种格式）见 [05 RISC-V概览与指令格式](05-risc-v-overview-and-instruction-formats.md)。
 
 ## 保留加载与条件存储（lr.d / sc.d）
 
@@ -88,7 +88,7 @@ flowchart TD
 
 ## LR/SC 的边界情况
 
-LR/SC 成对使用时语义直观，但地址不一致、不成对或交错使用时，结果完全由两条规则决定。[^s1p69] 依据 RISC-V A 扩展规范（[RISC-V ISA Manual: "A" Extension](https://five-embeddev.com/riscv-isa-manual/latest/a.html#)）：
+LR/SC 成对使用时语义直观，但地址不一致、不成对或交错使用时，结果完全由两条规则决定。[^s1p69] 依据 [RISC-V 官方非特权规范：A 扩展的 Zalrsc（LR/SC）一节](https://docs.riscv.org/reference/isa/v20260120/unpriv/a-st-ext.html)：
 
 1. **成功条件**：`sc.w` 只有在保留仍有效，**并且**保留集合（reservation set）包含它要写入的字节时才成功；
 2. **SC 总会清除保留**：无论成功还是失败，执行一条 `sc.w` 都会使本 hart（硬件线程）持有的任何保留失效。[^s1p69]
@@ -145,13 +145,15 @@ sc.w t3, a1, (a2)
 [^s1p71]
 
 - 寄存器寻址：所有算术运算的源数据都来自寄存器堆，指令里只给寄存器编号。
-- 基址寻址：寄存器中存放的是内存地址，再加上一个立即数偏移，才得到真正访问的内存位置。偏移范围与 `ld`/`sd` 的细节见 [[06 算术与访存指令]]。
+- 基址寻址：寄存器中存放的是内存地址，再加上一个立即数偏移，才得到真正访问的内存位置。偏移范围与 `ld`/`sd` 的细节见 [06 算术与访存指令](06-arithmetic-and-memory-instructions.md)。
 - 立即数寻址：一部分源操作数直接编码在指令里，不需要额外访存或占用寄存器。
 - PC 相对寻址：目标地址以当前 PC 为基准加上指令中的立即数，用于分支，找到的是"分支目的指令"。[^s1p72]
 
-![立即数寻址的操作数是指令中的 12 位常量；PC 相对寻址的目标指令地址是 PC 加 12 位常量](../assets/l02-immediate-pc-relative-addressing.png)
+![立即数寻址与 PC 相对寻址](../assets/l02-immediate-pc-relative-addressing.png)
 
-PC 相对寻址中，SB 型指令的立即数被拆成两段（`imm | rs2 | rs1 | funct3 | imm | opcode`），拼接后与 PC 相加得到分支目标；其跳转范围与立即数最低位省略的细节见 [[07 分支过程调用与栈]]。
+图：立即数寻址的操作数是指令中的 12 位常量；PC 相对寻址的目标指令地址是 PC 加 12 位常量。
+
+PC 相对寻址中，SB 型指令的立即数被拆成两段（`imm | rs2 | rs1 | funct3 | imm | opcode`），拼接后与 PC 相加得到分支目标；其跳转范围与立即数最低位省略的细节见 [07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md)。
 
 ## RISC-V 指令汇总与设计原则
 
@@ -165,8 +167,8 @@ PC 相对寻址中，SB 型指令的立即数被拆成两段（`imm | rs2 | rs1 
 | | or immediate | 0010011 | `ori x5, x6, 20` | x5 = x6 \| 20 |
 | 数据传送（I、S、U） | load doubleword | 0000011 | `ld x5, 40(x6)` | x5 = Memory[x6 + 40] |
 | | store doubleword | 0100011 | `sd x5, 40(x6)` | Memory[x6 + 40] = x5 |
-| | load byte | 0000011 | `lb x5, 40(x6)` | x5(7:0) = Memory[x6 + 40](7:0)，高位符号扩展 |
-| | store byte | 0100011 | `sb x5, 40(x6)` | Memory[x6 + 40](7:0) = x5(7:0) |
+| | load byte | 0000011 | `lb x5, 40(x6)` | `x5(7:0) = Memory[x6 + 40](7:0)`，高位符号扩展 |
+| | store byte | 0100011 | `sb x5, 40(x6)` | `Memory[x6 + 40](7:0) = x5(7:0)` |
 | | load upper imm | 0110111 | `lui x5, 0x12345` | x5 = 0x12345000 |
 | 条件分支（SB） | branch on equal | 1100011 | `beq x5, x6, 100` | if (x5 == x6) go to PC+100 |
 | | branch on not equal | 1100011 | `bne x5, x6, 100` | if (x5 != x6) go to PC+100 |
@@ -176,7 +178,7 @@ PC 相对寻址中，SB 型指令的立即数被拆成两段（`imm | rs2 | rs1 
 [^s1p70]
 
 > [!warning] 易错点：幻灯片操作码表有误
-> 原表把 `beq`/`bne` 的操作码写成 `1100111`，正确的 BRANCH 操作码是 **`1100011`**；`jal` 与 `jalr` 的操作码写反了，正确为 **`jal = 1101111`、`jalr = 1100111`**。[^s1p70] 上表已按 RISC-V 规范更正。另外原表 `lb` 的含义只写了低 8 位，实际加载后高位按符号扩展（见 [[06 算术与访存指令]]）。
+> 原表把 `beq`/`bne` 的操作码写成 `1100111`，正确的 BRANCH 操作码是 **`1100011`**；`jal` 与 `jalr` 的操作码写反了，正确为 **`jal = 1101111`、`jalr = 1100111`**。[^s1p70] 上表已按 RISC-V 规范更正。另外原表 `lb` 的含义只写了低 8 位，实际加载后高位按符号扩展（见 [06 算术与访存指令](06-arithmetic-and-memory-instructions.md)）。
 
 RISC-V 的整体设计可以归结为四条原则，每一条都能在前面学过的内容里找到对应：[^s1p73]
 
@@ -185,7 +187,7 @@ RISC-V 的整体设计可以归结为四条原则，每一条都能在前面学�
 3. **越小越快**（Smaller is faster）：有限的指令集、寄存器堆中有限数量的寄存器、有限的寻址方式（只有上面 4 种）。
 4. **加速常见情况**（Make the common case fast）：算术运算的操作数都来自寄存器堆（load-store 结构，只有 load/store 访问内存）；允许指令中直接包含立即数，常用小常数不必先从内存加载，从而减少指令数。
 
-"加速常见情况"与 Amdahl 定律的关系见 [[03 性能汇总与Amdahl定律]]；CISC 与 RISC 的整体对比见 [[04 ISA抽象与RISC思想]]。
+"加速常见情况"与 Amdahl 定律的关系见 [03 性能汇总与Amdahl定律](03-performance-summary-and-amdahls-law.md)；CISC 与 RISC 的整体对比见 [04 ISA抽象与RISC思想](04-isa-abstraction-and-risc.md)。
 
 > [!question]- 自测：在原子交换循环中，若另一核心在 `lr.d` 与 `sc.d` 之间写了 `Memory[x20]`，接下来会发生什么？最终 `x23` 和内存中是什么？
 > `sc.d` 失败：`Memory[x20]` 不被写入（保持另一核心写入的值），`x11` 为非 0，`bne x11, x0, again` 跳回重新执行 `lr.d`，读到另一核心写入的新值。只有某一轮 `sc.d` 成功（`x11 = 0`）后，内存才变为原 `x23`，而 `x23` 得到该轮 `lr.d` 读到的值，交换仍然是原子的。

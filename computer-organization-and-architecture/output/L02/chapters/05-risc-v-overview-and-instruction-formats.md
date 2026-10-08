@@ -32,7 +32,7 @@ section: "section-5"
   - Draft Compressed ISA Specification v1.79
   - Draft Privileged ISA Specification v1.10
 
-RISC-V 与 CISC/RISC 哲学的一般对比以及 RISC 的市场现状见 [[04 ISA抽象与RISC思想]]，这里只关注 RISC-V 本身。
+RISC-V 与 CISC/RISC 哲学的一般对比以及 RISC 的市场现状见 [04 ISA抽象与RISC思想](04-isa-abstraction-and-risc.md)，这里只关注 RISC-V 本身。
 
 > [!tip] 课堂强调
 > RISC-V ISA 是本课程的重点。[^s2b8] 开放性是 RISC-V 最核心的优点：使用受专利保护的商业 ISA 若未获授权会被起诉，而在中美科技竞争、可能遭遇禁运的背景下，开放的 RISC-V 是可行的替代，同学们将来很可能要为它写编译器或汇编代码。开放也不意味着“只能做开源芯片”：基于 RISC-V 的芯片可以作为商业产品出售，例如 SiFive 专门为客户设计 RISC-V 芯片。为避免受单一国家的长臂管辖，RISC-V 的标准组织迁到了欧洲（瑞士）。[^s2b10]
@@ -102,16 +102,16 @@ C 扩展不包含在 G 中：压缩指令的适用范围较窄，主要用于嵌
 > [!tip] 课堂强调
 > RISC-V 的字长一般是 32 位或 64 位（规范还允许其他宽度）。本课程后续统一以 **64 位 RISC-V** 为准，因为 64 位更常见。
 
-原子指令（A 扩展中的 lr/sc 等）的语义见 [[08 同步指令与寻址方式]]。
+原子指令（A 扩展中的 lr/sc 等）的语义见 [08 同步指令与寻址方式](08-synchronization-and-addressing-modes.md)。
 
 ## 指令的组成与指令分类
 
-在 [[04 ISA抽象与RISC思想]] 的冯·诺依曼组织中，指令和数据都放在存储器里。落到 RISC-V 上，一条指令要回答两个问题：做什么操作、对谁操作。
+在 [04 ISA抽象与RISC思想](04-isa-abstraction-and-risc.md) 的冯·诺依曼组织中，指令和数据都放在存储器里。落到 RISC-V 上，一条指令要回答两个问题：做什么操作、对谁操作。
 
 **指令**（instruction）= **操作码**（opcode）+ **操作数说明**（operand specifiers）。[^s1p44]
 
 - **指令在哪里**：默认存放在存储器（memory）中，由**程序计数器**（Program Counter，PC）寄存器指向当前要执行的指令。
-- **操作数在哪里**：在存储器或寄存器中；具体访问哪一处（或两处都访问）由寻址方式决定（四种寻址方式见 [[08 同步指令与寻址方式]]）。
+- **操作数在哪里**：在存储器或寄存器中；具体访问哪一处（或两处都访问）由寻址方式决定（四种寻址方式见 [08 同步指令与寻址方式](08-synchronization-and-addressing-modes.md)）。
 - **操作码分三大类**：
   1. 访存（memory access）
   2. 算术 / 逻辑计算（arithmetic/logical computation）
@@ -123,7 +123,7 @@ C 扩展不包含在 G 中：压缩指令的适用范围较窄，主要用于嵌
 RISC-V ISA 的基本情况可以总结为：[^s1p45]
 
 - **指令类别**：算术 / 逻辑 / 移位（Arithmetic, Logical, Shift）；数据传输（Data transfer）；无条件 / 条件分支（Un-/Conditional branch）。
-- **寄存器**：32 个通用寄存器 `x0`–`x31`，外加 PC。各寄存器的用途约定见 [[06 算术与访存指令]]。
+- **寄存器**：32 个通用寄存器 `x0`–`x31`，外加 PC。各寄存器的用途约定见 [06 算术与访存指令](06-arithmetic-and-memory-instructions.md)。
 - **指令格式**：6 种，**全部 32 位宽**。
 
 > [!warning] 易错点
@@ -156,7 +156,9 @@ R 格式的字段宽度为 $7+5+5+3+5+7=32$ 位。寄存器字段 5 位，恰好
 
 （“←”表示该列被左边的立即数字段占用。）
 
-![RISC-V 六种 32 位指令格式 R/I/S/SB/U/UJ 的字段划分（7|5|5|3|5|7 位）与指令类别、寄存器 x0–x31 和 PC](../assets/l02-instruction-formats.png)
+![RISC-V 六种指令格式](../assets/l02-instruction-formats.png)
+
+图：RISC-V 六种 32 位指令格式 R/I/S/SB/U/UJ 的字段划分（7|5|5|3|5|7 位）与指令类别、寄存器 x0–x31 和 PC。
 
 从表中可以读出几条规律：
 
@@ -165,13 +167,15 @@ R 格式的字段宽度为 $7+5+5+3+5+7=32$ 位。寄存器字段 5 位，恰好
 3. **SB 是 S 的变体**，**UJ 是 U 的变体**：字段边界相同，只是立即数各位的摆放顺序不同。
 4. **U 格式**提供立即数的高 20 位 imm[31:12]；**UJ 格式**编码 imm[20:1]。
 
-各格式对应的具体指令及其编码，按 R 格式（[[06 算术与访存指令]]）、分支与跳转（[[07 分支过程调用与栈]]）分别展开；分支 / 跳转立即数能覆盖的地址范围也在 [[07 分支过程调用与栈]] 讨论。
+各格式对应的具体指令及其编码，按 R 格式（[06 算术与访存指令](06-arithmetic-and-memory-instructions.md)）、分支与跳转（[07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md)）分别展开；分支 / 跳转立即数能覆盖的地址范围也在 [07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md) 讨论。
 
 > [!info] 可视化资源
 > [rvcodec.js：RISC-V 指令在线编码/解码器](https://luplab.gitlab.io/rvcodecjs/) 输入一条汇编指令（如 `add x5, x6, x7`、`beq x5, x6, 100`）即可看到它的格式、二进制与十六进制编码，也可反过来粘贴十六进制机器码解码，适合对照上表验证各字段与立即数的位置。
+>
+> 若在线页面无法访问，可用 [Ripes](https://github.com/mortbopet/Ripes) 汇编程序并查看机器码；若需要 rvcodec.js 的逐字段编码展示，可下载[官方源码](https://gitlab.com/luplab/rvcodecjs)，按 README 的 Run locally 说明在本地运行。
 
 > [!note] 补充解释
-> SB 和 UJ 的立即数表中都没有 imm[0]：分支和跳转目标总是 2 字节对齐，最低位恒为 0，不必存储。这样 SB 用 12 个指令位表示 13 位立即数 imm[12:1]，UJ 用 20 个指令位表示 21 位立即数 imm[20:1]。参见 [RISC-V 指令集手册中的格式说明](https://five-embeddev.com/riscv-isa-manual/latest/a.html)。
+> SB 和 UJ 的立即数表中都没有 imm[0]：分支和跳转目标总是 2 字节对齐，最低位恒为 0，不必存储。这样 SB 用 12 个指令位表示 13 位立即数 imm[12:1]，UJ 用 20 个指令位表示 21 位立即数 imm[20:1]。参见 [RISC-V 官方非特权规范：RV32I 的 Immediate Encoding Variants](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html)。
 
 ## 立即数的“打散”排布
 
@@ -194,7 +198,9 @@ R 格式的字段宽度为 $7+5+5+3+5+7=32$ 位。寄存器字段 5 位，恰好
 | 11:8 | rd | imm[4:1] | imm[4:1] | rd | rd | S 与 SB 中均为 **imm[4:1]** |
 | 7 | rd | imm[0] | imm[11] | rd | rd | — |
 
-![各格式立即数的逐位位置：符号位始终在 bit 31，imm[10:5]、imm[19:12]、imm[4:1] 等字段在多个格式中对齐](assets/l02-immediate-bit-layout.png)
+![RISC-V 立即数字段布局](../assets/l02-immediate-bit-layout.png)
+
+图：各格式立即数的逐位位置：符号位始终在 bit 31，`imm[10:5]`、`imm[19:12]`、`imm[4:1]` 等字段在多个格式中对齐。
 
 由此得到两条设计规则：
 
@@ -214,7 +220,7 @@ R 格式的字段宽度为 $7+5+5+3+5+7=32$ 位。寄存器字段 5 位，恰好
 1. 如何识别 / 编码这些指令？
 2. 如何处理数据：支持哪些数据类型、数据存放在哪里、有哪些寻址方式？
 
-这些问题依次在 [[06 算术与访存指令]]、[[07 分支过程调用与栈]] 和 [[08 同步指令与寻址方式]] 中展开。
+这些问题依次在 [06 算术与访存指令](06-arithmetic-and-memory-instructions.md)、[07 分支过程调用与栈](07-branches-procedure-calls-and-stack.md) 和 [08 同步指令与寻址方式](08-synchronization-and-addressing-modes.md) 中展开。
 
 > [!question]- 自测：某处理器文档写着 “RV64IMAC”。它支持哪些功能？它的普通指令有多长？能否称为 RV64G？
 > 支持 64 位字长的基础整数指令（I）、整数乘除（M）、原子指令（A）和 16 位压缩指令（C）；非压缩指令仍为 32 位（压缩指令 16 位）。不能称为 RV64G，因为 $G=\text{IMAFD}$，它缺少单精度 F 和双精度 D 浮点扩展。
