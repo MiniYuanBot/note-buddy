@@ -11,3 +11,4 @@ course: "coa"
 - [L01 计算机体系结构导论](L01/index.md)
 - [L02 性能与RISC-V指令集](L02/index.md)
 - [L03 RISC-V ALU与基础架构](L03/index.md)
+- [L04 分支预测与多发射处理器](L04/index.md)
