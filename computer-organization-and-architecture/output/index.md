@@ -12,4 +12,4 @@ course: "coa"
 - [L02 性能与RISC-V指令集](L02/index.md)
 - [L03 RISC-V ALU与基础架构](L03/index.md)
 - [L04 分支预测与多发射处理器](L04/index.md)
-- [L05 静态调度与动态调度](L05/index.md)
+- [L05 动态调度](L05/index.md)
