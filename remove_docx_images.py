@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """直接覆盖本项目 DOCX，删除图片及其前后相邻的连续空段落。
 
-支持 macOS / Windows，要求 Python 3.9+，无需第三方依赖或安装 Word。
+支持 macOS / Windows / Linux，要求 Python 3.9+，无需第三方依赖或安装 Word。
 
 Windows：
     py -3 remove_docx_images.py
     py -3 remove_docx_images.py operating-system/input
 
-macOS：
+macOS / Linux：
     python3 remove_docx_images.py
     python3 remove_docx_images.py operating-system/input
 
@@ -29,12 +29,19 @@ import tempfile
 from pathlib import Path
 from urllib.parse import unquote
 from xml.dom import Node, minidom
-from zipfile import ZipFile
-
+from xml.parsers.expat import ExpatError
+from zipfile import BadZipFile, LargeZipFile, ZipFile
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SKIP_DIRECTORIES = {
-    ".git", ".obsidian", ".venv", "venv", "__pycache__", "node_modules", "workspace", "去图结果"
+    ".git",
+    ".obsidian",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "node_modules",
+    "workspace",
+    "去图结果",
 }
 
 
@@ -55,7 +62,11 @@ MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
 
 
 def is_w(node: Node, name: str) -> bool:
-    return node.nodeType == Node.ELEMENT_NODE and node.namespaceURI in W and node.localName == name
+    return (
+        node.nodeType == Node.ELEMENT_NODE
+        and node.namespaceURI in W
+        and node.localName == name
+    )
 
 
 def elements(node: Node) -> list:
@@ -73,13 +84,17 @@ def ancestor(node: Node, predicate):
 
 def text_of(node: Node) -> str:
     return "".join(
-        child.data for child in node.childNodes
+        child.data
+        for child in node.childNodes
         if child.nodeType in (Node.TEXT_NODE, Node.CDATA_SECTION_NODE)
     )
 
 
 def has_text(node: Node) -> bool:
-    return any(is_w(child, "t") and text_of(child).strip() for child in node.getElementsByTagName("*"))
+    return any(
+        is_w(child, "t") and text_of(child).strip()
+        for child in node.getElementsByTagName("*")
+    )
 
 
 def is_blank(node: Node) -> bool:
@@ -100,13 +115,31 @@ def is_blank(node: Node) -> bool:
         if node.localName == "rPr":
             return True
         if node.localName == "br":
-            kind = next((node.getAttributeNS(ns, "type") for ns in W if node.hasAttributeNS(ns, "type")), "")
+            kind = next(
+                (
+                    node.getAttributeNS(ns, "type")
+                    for ns in W
+                    if node.hasAttributeNS(ns, "type")
+                ),
+                "",
+            )
             return kind in ("", "textWrapping")
         if node.localName not in {
-            "p", "r", "t", "tab", "cr", "hyperlink", "pict", "proofErr", "lastRenderedPageBreak"
+            "p",
+            "r",
+            "t",
+            "tab",
+            "cr",
+            "hyperlink",
+            "pict",
+            "proofErr",
+            "lastRenderedPageBreak",
         }:
             return False
-    elif not (node.namespaceURI == MC and node.localName in {"AlternateContent", "Choice", "Fallback"}):
+    elif not (
+        node.namespaceURI == MC
+        and node.localName in {"AlternateContent", "Choice", "Fallback"}
+    ):
         return False
     return all(is_blank(child) for child in node.childNodes)
 
@@ -120,7 +153,8 @@ def sibling_element(node: Node, backwards: bool):
 
 def clean_xml(document: minidom.Document) -> tuple[int, int]:
     pictures = [
-        node for node in document.getElementsByTagName("*")
+        node
+        for node in document.getElementsByTagName("*")
         if (node.namespaceURI in PIC and node.localName == "pic")
         or (node.namespaceURI == V and node.localName == "imagedata")
     ]
@@ -137,20 +171,30 @@ def clean_xml(document: minidom.Document) -> tuple[int, int]:
             drawing = ancestor(picture, lambda n: is_w(n, "drawing"))
             graphic_data = ancestor(
                 picture,
-                lambda n: n.nodeType == Node.ELEMENT_NODE
-                and n.localName == "graphicData"
-                and n.namespaceURI in {
-                    "http://schemas.openxmlformats.org/drawingml/2006/main",
-                    "http://purl.oclc.org/ooxml/drawingml/main",
-                },
+                lambda n: (
+                    n.nodeType == Node.ELEMENT_NODE
+                    and n.localName == "graphicData"
+                    and n.namespaceURI
+                    in {
+                        "http://schemas.openxmlformats.org/drawingml/2006/main",
+                        "http://purl.oclc.org/ooxml/drawingml/main",
+                    }
+                ),
             )
-            if drawing is not None and graphic_data is not None:
-                if graphic_data.getAttribute("uri") in PIC and not has_text(drawing):
-                    target = drawing
+            if (
+                drawing is not None
+                and graphic_data is not None
+                and graphic_data.getAttribute("uri") in PIC
+                and not has_text(drawing)
+            ):
+                target = drawing
         else:
             shape = ancestor(
                 picture,
-                lambda n: n.namespaceURI == V and n.localName in {"shape", "rect", "roundrect", "oval"},
+                lambda n: (
+                    n.namespaceURI == V
+                    and n.localName in {"shape", "rect", "roundrect", "oval"}
+                ),
             )
             if shape is not None and not has_text(shape):
                 target = shape
@@ -166,7 +210,8 @@ def clean_xml(document: minidom.Document) -> tuple[int, int]:
             outer = current.parentNode
             empty_pict = is_w(current, "pict") and not elements(current)
             empty_alternate = (
-                current.namespaceURI == MC and current.localName == "AlternateContent"
+                current.namespaceURI == MC
+                and current.localName == "AlternateContent"
                 and all(n.namespaceURI == MC for n in current.getElementsByTagName("*"))
             )
             if outer is not None and (empty_pict or empty_alternate):
@@ -253,7 +298,9 @@ def process_docx(source: Path) -> tuple[int, int, int]:
                 try:
                     source_part = relationship_source(name)
                     changed = False
-                    for rel in list(document.getElementsByTagNameNS("*", "Relationship")):
+                    for rel in list(
+                        document.getElementsByTagNameNS("*", "Relationship")
+                    ):
                         external = rel.getAttribute("TargetMode") == "External"
                         target = resolve_target(source_part, rel.getAttribute("Target"))
                         unused_image = (
@@ -277,8 +324,13 @@ def process_docx(source: Path) -> tuple[int, int, int]:
                 document = minidom.parseString(archive.read("[Content_Types].xml"))
                 try:
                     changed = False
-                    for override in list(document.getElementsByTagNameNS("*", "Override")):
-                        if unquote(override.getAttribute("PartName")).lstrip("/") in deleted_media:
+                    for override in list(
+                        document.getElementsByTagNameNS("*", "Override")
+                    ):
+                        if (
+                            unquote(override.getAttribute("PartName")).lstrip("/")
+                            in deleted_media
+                        ):
                             override.parentNode.removeChild(override)
                             changed = True
                     if changed:
@@ -288,14 +340,18 @@ def process_docx(source: Path) -> tuple[int, int, int]:
 
             if not updates:
                 return 0, 0, 0
-            with tempfile.NamedTemporaryFile(dir=source.parent, prefix=".docx-clean-", suffix=".tmp", delete=False) as file:
+            with tempfile.NamedTemporaryFile(
+                dir=source.parent, prefix=".docx-clean-", suffix=".tmp", delete=False
+            ) as file:
                 temporary = Path(file.name)
             with ZipFile(temporary, "w") as result:
                 result.comment = archive.comment
                 for info in archive.infolist():
                     if info.filename not in deleted_media:
                         data = updates.get(info.filename)
-                        result.writestr(info, archive.read(info.filename) if data is None else data)
+                        result.writestr(
+                            info, archive.read(info.filename) if data is None else data
+                        )
         # macOS 等 POSIX 系统上，保留原权限，避免临时文件的 0600 权限影响共享。
         if os.name == "posix":
             os.chmod(temporary, stat.S_IMODE(source.stat().st_mode))
@@ -314,8 +370,10 @@ def find_documents(folder: Path, recursive: bool = True) -> list[Path]:
         for name in filenames:
             candidate = Path(current) / name
             if (
-                name.lower().endswith(".docx") and not name.startswith(("~$", "._"))
-                and not candidate.is_symlink() and candidate.resolve().is_relative_to(PROJECT_ROOT)
+                name.lower().endswith(".docx")
+                and not name.startswith(("~$", "._"))
+                and not candidate.is_symlink()
+                and candidate.resolve().is_relative_to(PROJECT_ROOT)
             ):
                 files.append(candidate)
         if not recursive:
@@ -328,9 +386,23 @@ def main() -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(errors="backslashreplace")
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("folder", nargs="?", type=Path, default=Path("."), help="项目内待处理的文件夹，默认：整个项目")
-    parser.add_argument("-r", "--recursive", action=argparse.BooleanOptionalAction, default=True, help="递归扫描，默认开启；--no-recursive 仅扫描指定文件夹")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "folder",
+        nargs="?",
+        type=Path,
+        default=Path("."),
+        help="项目内待处理的文件夹，默认：整个项目",
+    )
+    parser.add_argument(
+        "-r",
+        "--recursive",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="递归扫描，默认开启；--no-recursive 仅扫描指定文件夹",
+    )
     args = parser.parse_args()
     folder = (PROJECT_ROOT / args.folder.expanduser()).resolve()
     if not folder.is_relative_to(PROJECT_ROOT):
@@ -350,9 +422,11 @@ def main() -> int:
                 print(f"[跳过] {relative}：没有可删除的图片，原文件未改动")
                 skipped += 1
                 continue
-            print(f"[已覆盖] {relative}：删除 {images} 个图片节点、{blanks} 个空段落、{media} 个图片文件")
+            print(
+                f"[已覆盖] {relative}：删除 {images} 个图片节点、{blanks} 个空段落、{media} 个图片文件"
+            )
             success += 1
-        except Exception as error:
+        except (OSError, ValueError, BadZipFile, LargeZipFile, ExpatError) as error:
             print(f"[失败] {relative}：{error}", file=sys.stderr)
             failed += 1
     print(f"\n已覆盖 {success} 个，跳过 {skipped} 个，失败 {failed} 个。")
