@@ -64,15 +64,30 @@ CPU 执行程序时，要先拿到一个地址，再到这个地址去取指令�
 5. **解决问题**：操作系统处理缺页（如分配物理页、把内容读入、建立映射），之后程序继续执行。
 
 ```mermaid
-flowchart LR
-  CPU["CPU 取得虚拟地址"] --> MMU["MMU 地址转换"]
-  MMU --> TLB["查 TLB（加速）"]
-  MMU --> PT["查内存中的页表"]
-  PT -->|已映射| PM["访问物理内存"]
-  PT -->|未映射| PF["产生 page fault"]
-  PF --> K["进入内核"]
-  K --> OS["操作系统处理缺页"]
-  OS --> CPU
+flowchart TD
+    CPU["CPU 发起访存（虚拟地址 VA）"] --> TLB{"MMU 查询 TLB"}
+
+    TLB -->|命中且权限允许| PA["得到物理地址 PA"]
+    TLB -->|未命中| SATP["读取 satp.PPN<br/>获得根页表物理地址"]
+
+    SATP --> L2["查 L2 页表（VPN[2]）"]
+    L2 --> L1["查 L1 页表（VPN[1]）"]
+    L1 --> L0["查 L0 页表（VPN[0]）"]
+
+    L0 --> CHECK{"页表项有效且权限允许？"}
+    CHECK -->|是| FILL["填充 TLB"]
+    FILL --> PA
+
+    TLB -->|权限不足| PF["Page Fault"]
+    CHECK -->|否| PF
+
+    PA --> MEM["访问缓存 / DRAM"]
+
+    PF --> TRAP["陷入 S-mode 内核"]
+    TRAP --> OS{"内核能否处理？"}
+    OS -->|能| RET["修复映射，执行 SRET"]
+    RET --> CPU
+    OS -->|不能| ERR["终止进程或报告异常"]
 ```
 
 这个流程的骨架是：**硬件发现问题 → 进入内核 → 操作系统解决问题**。后面会看到，系统调用、中断等事件也都有类似的“进内核、处理、出内核”结构。hello world 执行时第一条指令就会触发缺页，具体如何处理、处理完从哪里继续，见[hello world 的运行](03-hello-world-scheduling-page-fault-system-calls.md)。
